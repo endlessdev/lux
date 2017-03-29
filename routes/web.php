@@ -12,5 +12,19 @@
 */
 
 $app->get('/', function () use ($app) {
-    return $app->version();
+    return redirect()->route('v1_0');
 });
+
+$app->group([
+    'prefix' => 'v1.0',
+    'namespace' => 'App\Http\Controllers\V1_0',
+], function () use ($app) {
+
+    $app->get('/', ['as' => 'v1_0', function () {
+        return "Welcome to Lux";
+    }]);
+
+    $app->get('/auth/signup', 'AuthController@signUp');
+
+});
+
