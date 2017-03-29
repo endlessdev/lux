@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Model;
  * Date: 29/03/2017
  * Time: 11:44 AM
  */
-class Account extends Model
+class AccountUser extends Model
 {
-    protected $table = "accounts";
+    protected $table = "accounts_users";
     protected $primaryKey = 'idx';
-    protected $dates = ['created_at', 'deleted_at'];
-    protected $guarded = ['idx', 'type', 'created_at'];
+    protected $guarded = ['idx', 'account_idx', 'join_type'];
+
+    public $timestamps = false;
 
 }

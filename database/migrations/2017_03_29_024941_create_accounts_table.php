@@ -24,6 +24,36 @@ class CreateAccountsTable extends Migration
             $table->string('password', 60)->nullable();
             $table->timestamps();
         });
+
+        Schema::create('accounts_users', function (Blueprint $table) {
+            $table->increments('idx');
+            $table->integer('account_idx');
+            $table->enum('gender', [
+                'male',
+                'female',
+                'androgyne',
+                'trigender',
+                'agender',
+                'genderfluid'
+            ])->nullable();
+
+            $table->timestamp('birth')
+                ->nullable();
+
+            $table->enum('join_type', [
+                'general',
+                'facebook',
+                'kakao',
+                'naver',
+                'twitter'
+            ]);
+
+            $table->foreign('account_idx')
+                ->references('idx')
+                ->on('accounts')
+                ->onDelete('cascade');
+        });
+
     }
 
     /**
