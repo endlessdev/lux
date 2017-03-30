@@ -13,15 +13,15 @@ class CreateAccountsTable extends Migration
      */
     public function up()
     {
+
         Schema::create('accounts', function (Blueprint $table) {
             $table->increments('idx');
             $table->enum('type', [
                 'user',
-                'partner',
                 'admin',
             ])->default('user');
-            $table->string('email', 60)->unique()->nullable();
-            $table->string('password', 60)->nullable();
+            $table->string('email', 100)->unique()->nullable();
+            $table->string('password', 100)->nullable();
             $table->timestamps();
         });
 
@@ -52,6 +52,7 @@ class CreateAccountsTable extends Migration
                 ->references('idx')
                 ->on('accounts')
                 ->onDelete('cascade');
+
         });
 
     }
