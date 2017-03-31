@@ -46,7 +46,7 @@ class CreateAccountsTable extends Migration
                 'kakao',
                 'naver',
                 'twitter'
-            ]);
+            ])->default('general');
 
             $table->foreign('account_idx')
                 ->references('idx')
@@ -64,6 +64,12 @@ class CreateAccountsTable extends Migration
      */
     public function down()
     {
+
+        Schema::table('accounts_users', function (Blueprint $table) {
+            $table->dropForeign(['account_idx']);
+        });
+
         Schema::drop('accounts');
+        Schema::drop('accounts_users');
     }
 }

@@ -17,14 +17,15 @@ $app->get('/', function () use ($app) {
 
 $app->group([
     'prefix' => 'v1.0',
-    'namespace' => 'App\Http\Controllers\V1_0',
+//    'namespace' => 'App\Http\Controllers\V1_0',
 ], function () use ($app) {
 
     $app->get('/', ['as' => 'v1_0', function () {
         return "Welcome to Lux";
     }]);
 
-    $app->get('/auth/signup', 'AuthController@signUp');
+    $app->post('/auth/signup', 'V1_0\AuthController@signUp');
+    $app->post('/auth/signin', 'V1_0\AuthController@signIn');
 
 });
 

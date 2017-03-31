@@ -17,4 +17,9 @@ class Account extends Model
     protected $dates = ['created_at', 'deleted_at'];
     protected $guarded = ['idx', 'type', 'created_at'];
 
+    public function getAccountByEmail(string $userEmail)
+    {
+        return $this->where('email', $userEmail)->first();
+    }
+
 }
