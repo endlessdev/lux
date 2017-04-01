@@ -50,8 +50,8 @@ class CreateAccountsTable extends Migration
             $table->enum('join_type', [
                 'general',
                 'facebook',
-                'kakao',
-                'naver',
+//                'kakao',
+//                'naver',
                 'twitter'
             ])->default('general');
 
@@ -59,7 +59,19 @@ class CreateAccountsTable extends Migration
                 ->references('idx')
                 ->on('accounts')
                 ->onDelete('cascade');
+        });
 
+        Schema::create('accounts_users_fb', function(Blueprint $table){
+            $table->increments('idx');
+            $table->integer('account_idx')->unsigned();
+
+            $table->string('fb_id');
+            $table->string('fb_token');
+
+            $table->foreign('account_idx')
+                ->references('idx')
+                ->on('accounts')
+                ->onDelete('cascade');
         });
 
     }
@@ -75,6 +87,12 @@ class CreateAccountsTable extends Migration
         Schema::table('accounts_users', function (Blueprint $table) {
             $table->dropForeign(['account_idx']);
         });
+
+        Schema::table('accounts_users_app', function (Blueprint $table) {
+            $table->dropForeign(['account_idx']);
+        });
+
+        Schema::drop('accounts');
 
         Schema::drop('accounts_users');
 
