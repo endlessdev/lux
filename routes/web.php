@@ -12,20 +12,33 @@
 */
 
 $app->get('/', function () use ($app) {
+    //Return latest api route
     return redirect()->route('v1_0');
 });
 
 $app->group([
     'prefix' => 'v1.0',
-//    'namespace' => 'App\Http\Controllers\V1_0',
+    'namespace' => 'V1_0',
 ], function () use ($app) {
 
     $app->get('/', ['as' => 'v1_0', function () {
         return "Welcome to Lux";
     }]);
 
-    $app->post('/auth/signup', 'V1_0\AuthController@signUp');
-    $app->post('/auth/signin', 'V1_0\AuthController@signIn');
+    $app->group([
+        'prefix' => 'auth'
+    ], function() use ($app){
+        $app->post('/signin', 'AuthController@signIn');
+        $app->post('/signup', 'AuthController@signUp');
+
+        $app->post('/signin/{snsType?}', 'AuthController@signInWithApp');
+        $app->post('/signup/{snsType?}', 'AuthController@signUpWithApp');
+
+        $app->get('/refresh/{accountIdx?}', 'AuthController@refreshToken');
+        $app->get('/info/{accountIdx?}', 'AuthController@getAuthInfo');
+
+        $app->delete('/{accountIdx?}','AuthController@deleteAccount');
+    });
 
 });
 
