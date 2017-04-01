@@ -34,6 +34,9 @@ class CreateAccountsTable extends Migration
 
             $table->increments('idx');
             $table->integer('account_idx')->unsigned();
+            $table->string('username');
+            $table->timestamp('birth')
+                ->nullable();
             $table->enum('gender', [
                 'male',
                 'female',
@@ -43,8 +46,6 @@ class CreateAccountsTable extends Migration
                 'genderfluid'
             ])->nullable();
 
-            $table->timestamp('birth')
-                ->nullable();
 
             $table->enum('join_type', [
                 'general',

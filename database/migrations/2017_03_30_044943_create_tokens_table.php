@@ -17,6 +17,8 @@ class CreateTokensTable extends Migration
             $table->increments('idx');
             $table->integer('account_idx')->unsigned();
             $table->string('token', 50)->unique();
+
+            $table->timestamps();
             $table->timestamp('expire_at');
 
             $table->foreign('account_idx')
