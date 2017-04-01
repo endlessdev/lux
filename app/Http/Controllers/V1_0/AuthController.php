@@ -42,7 +42,7 @@ class AuthController extends Controller
         if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
             return Response::commonResponse("Succeed Sign In", $foundAccount, 200);
         } else {
-            return Response::commonResponse("Failed to find Account", [], 200);
+            return Response::commonResponse("Incorrect password", [], 401);
         }
 
     }
