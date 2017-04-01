@@ -6,8 +6,33 @@
     </a>
 </p>
 
-## Installation
+## Get started
 <pre>
 $ git clone https://github.com/endlessdev/Lux.git
 $ cd Lux && composer install && composer update
 </pre>
+
+## API Overview
+### Authorization
+
+| Method | URL | DESC |
+|---|---|---|
+| POST | v@/auth/ | Log-in |
+| POST | v@/auth/{snsType?} | SNS Log-in |
+| POST | v@/auth/signup | Register |
+| POST | v@/auth/signup/{snsType?} | SNS Register |
+| POST | v@/auth/signout | Log-out |
+| GET | v@/auth/refresh | Refresh token |
+| GET | v@/auth/info | Get auth info |
+| DELETE | v@/auth/ | Withdrawal |
+
+### User
+
+| Method | URL | DESC |
+|---|---|---|
+| GET | v@/users/{page?} | Get user info (pagination) |
+| GET | v@/user/{userIdx?} | Get specific user info |
+| POST | v@/user/{userIdx?}/disable | Disable user |
+| POST | v@/user/{userIdx?}/enable | Enable user |
+| PUT | v@/user/{userIdx?} | Edit user info |
+| DELETE | v@/user/{userIdx?} | Force withdrawal [Required Admin permission] |
