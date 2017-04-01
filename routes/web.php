@@ -31,7 +31,7 @@ $app->group([
         $app->post('/signin', 'AuthController@signIn');
         $app->post('/signup', 'AuthController@signUp');
 
-        $app->post('/signin/{snsType?}', 'AuthController@signInWithApp');
+        $app->post('/signin/{snsType:[a-z_]+}', 'AuthController@signInWithApp');
         $app->post('/signup/{snsType:[a-z_]+}', 'AuthController@signUpWithApp');
 
         $app->get('/refresh/{accountIdx?}', 'AuthController@refreshToken');
