@@ -15,9 +15,14 @@ class CreateTokensTable extends Migration
     {
         Schema::create('tokens', function (Blueprint $table) {
             $table->increments('idx');
-            $table->integer('account_idx');
-            $table->string('token', 32)->unique();
+            $table->integer('account_idx')->unsigned();
+            $table->string('token', 50)->unique();
             $table->timestamp('expire_at');
+
+            $table->foreign('account_idx')
+                ->references('idx')
+                ->on('accounts')
+                ->onDelete('cascade');
         });
     }
 

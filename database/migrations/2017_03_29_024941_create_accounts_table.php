@@ -15,6 +15,9 @@ class CreateAccountsTable extends Migration
     {
 
         Schema::create('accounts', function (Blueprint $table) {
+
+            $table->engine = 'InnoDB';
+
             $table->increments('idx');
             $table->enum('type', [
                 'user',
@@ -26,8 +29,11 @@ class CreateAccountsTable extends Migration
         });
 
         Schema::create('accounts_users', function (Blueprint $table) {
+
+            $table->engine = 'InnoDB';
+
             $table->increments('idx');
-            $table->integer('account_idx');
+            $table->integer('account_idx')->unsigned();
             $table->enum('gender', [
                 'male',
                 'female',
@@ -69,7 +75,8 @@ class CreateAccountsTable extends Migration
             $table->dropForeign(['account_idx']);
         });
 
-        Schema::drop('accounts');
         Schema::drop('accounts_users');
+
+        Schema::drop('accounts');
     }
 }
