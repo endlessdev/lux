@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\V1_0;
 
+use App\Helpers\Token;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountUser;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use App\Helpers\Response;
 
@@ -35,11 +35,11 @@ class AuthController extends Controller
 
         $foundAccount = $this->account->getAccountByEmail($this->request->input('email'));
 
-        if(!$foundAccount){
+        if (!$foundAccount) {
             return Response::commonResponse("Not exists", [], 404);
         }
 
-        if (Hash::check($this->request->input('password'), $foundAccount->password)) {
+        if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
             return Response::commonResponse("Succeed Sign In", $foundAccount, 200);
         } else {
             return Response::commonResponse("Failed to find Account", [], 200);
@@ -49,19 +49,37 @@ class AuthController extends Controller
 
     public function signUp()
     {
+
         $this->validate($this->request, [
-            'email' => 'required|email',
+            'email' => 'required|email|unique:accounts',
             'password' => 'required',
-            'username' => 'required|unique:accounts_user|max:255',
+            'username' => 'required|unique:accounts_users|max:255',
             'gender' => 'required',
-            'birth' => 'required | date'
+            'birth' => 'required|date'
         ]);
 
         $account = new Account();
         $accountUser = new AccountUser();
+        $token = new \App\Models\Token();
 
-        $account->email = $this->request->input('email');
-        $account->password = $this->request->input('password');
+        $account->email = $this->request->email;
+        $account->password = app('hash')->make($this->request->password);
+
+        $account->save();
+
+        $accountUser->username = $this->request->username;
+        $accountUser->birth = $this->request->birth;
+        $accountUser->gender = $this->request->gender;
+        $accountUser->account_idx = $account->idx;
+
+        $token->token = Token::getToken();
+        $token->account_idx = $account->idx;
+        $token->expire_at = date('Y-m-d H:i:s', strtotime('+3 days'));
+
+        $accountUser->save();
+        $token->save();
+
+        return response()->json($account);
 
     }
 }
