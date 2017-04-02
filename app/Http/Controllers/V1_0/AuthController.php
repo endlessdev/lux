@@ -75,7 +75,7 @@ class AuthController extends Controller
             case "fb":
                 $userFB = new AccountUserFB();
                 $userFB->fb_id = $this->request->appId;
-                
+
                 $foundUser = $userFB->findUserByAppId();
 
                 return Response::commonResponse("Success signInWithApp", $foundUser, 200);
@@ -157,7 +157,7 @@ class AuthController extends Controller
         $tokenModel->save();
     }
 
-    private function getNewToken(TokenModel $tokenModel)
+    private function getNewToken(TokenModel &$tokenModel)
     {
         $tokenModel->token = Token::getToken();
 
