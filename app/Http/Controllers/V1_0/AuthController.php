@@ -10,6 +10,8 @@ use App\Models\AccountUserFB;
 use Illuminate\Http\Request;
 use App\Helpers\Response;
 
+use App\Models\Token as TokenModel;
+
 
 /**
  * @class AuthController
@@ -34,7 +36,7 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $foundAccount = $this->account->getAccountByEmail($this->request->input('email'));
+        $foundAccount = $this->account->getAccountByIdx();
 
         if (!$foundAccount) {
             return Response::commonResponse("Not exists", [], 404);
@@ -49,31 +51,16 @@ class AuthController extends Controller
 
     public function signUp()
     {
-
         $this->validate($this->request, $this->getCommonSignUpValidation());
 
         $account = new Account();
         $accountUser = new AccountUser();
-        $token = new \App\Models\Token();
 
-        $account->email = $this->request->email;
-        $account->password = app('hash')->make($this->request->password);
+        $this->baseSignUp($account, $accountUser);
 
-        $account->save();
+        $this->generateToken($account->idx);
 
-        $accountUser->username = $this->request->username;
-        $accountUser->birth = $this->request->birth;
-        $accountUser->gender = $this->request->gender;
-        $accountUser->account_idx = $account->idx;
-
-        $token->token = Token::getToken();
-        $token->account_idx = $account->idx;
-        $token->expire_at = date('Y-m-d H:i:s', strtotime('+3 days'));
-
-        $accountUser->save();
-        $token->save();
-
-        return response()->json($account);
+        return Response::commonResponse("Successful SignUp", $account->getAccountByIdx($account->idx), 201);
     }
 
     public function signInWithApp($snsType)
@@ -87,7 +74,10 @@ class AuthController extends Controller
         switch ($snsType) {
             case "fb":
                 $userFB = new AccountUserFB();
-                $foundUser = $userFB->findUserByAppId($this->request->appId);
+                $userFB->fb_id = $this->request->appId;
+                
+                $foundUser = $userFB->findUserByAppId();
+
                 return Response::commonResponse("Success signInWithApp", $foundUser, 200);
                 break;
         }
@@ -100,39 +90,32 @@ class AuthController extends Controller
 
         switch ($snsType) {
             case 'fb':
+
                 $fbValidationCollection = collect([
                     'appId' => 'required|unique:accounts_users_fb,fb_id',
                     'appToken' => 'required|unique:accounts_users_fb,fb_token'
                 ]);
+
                 $this->validate($this->request, $fbValidationCollection
                     ->merge($this->getCommonSignUpValidation())->toArray());
 
                 $account = new Account();
                 $accountUser = new AccountUser();
+
+                $this->baseSignUp($account, $accountUser);
+
                 $accountUserFB = new AccountUserFB();
-                $token = new \App\Models\Token();
 
-                $account->email = $this->request->email;
-                $account->password = app('hash')->make($this->request->password);
-
-                $account->save();
-
-                $accountUser->username = $this->request->username;
-                $accountUser->birth = $this->request->birth;
-                $accountUser->gender = $this->request->gender;
-                $accountUser->account_idx = $account->idx;
-
-                $token->token = Token::getToken();
-                $token->account_idx = $account->idx;
-                $token->expire_at = date('Y-m-d H:i:s', strtotime('+3 days'));
+                $this->generateToken($account->idx);
 
                 $accountUserFB->fb_id = $this->request->appId;
                 $accountUserFB->fb_token = $this->request->appToken;
-                $accountUserFB->account_idx = $account->account_idx;
+                $accountUserFB->account_idx = $account->idx;
 
-                $accountUser->save();
-                $token->save();
+                $accountUserFB->save();
 
+
+                return Response::commonResponse("Successful SignUp", $account->getAccountByIdx(), 201);
                 break;
         }
 
@@ -160,6 +143,45 @@ class AuthController extends Controller
             'username' => 'required|unique:accounts_users|max:255',
             'gender' => 'required',
             'birth' => 'required|date'];
+    }
+
+    private function generateToken(int $accountIdx)
+    {
+        $tokenModel = new TokenModel();
+
+        $this->getNewToken($tokenModel);
+
+        $tokenModel->account_idx = $accountIdx;
+        $tokenModel->expire_at = TokenModel::getTokenVerifyTime();
+
+        $tokenModel->save();
+    }
+
+    private function getNewToken(TokenModel $tokenModel)
+    {
+        $tokenModel->token = Token::getToken();
+
+        while ($tokenModel->isExistsToken()) {
+            $tokenModel->token = Token::getToken();
+        }
+
+        return $tokenModel;
+    }
+
+    private function baseSignUp(Account &$account, AccountUser &$accountUser)
+    {
+
+        $account->email = $this->request->email;
+        $account->password = app('hash')->make($this->request->password);
+
+        $account->save();
+
+        $accountUser->username = $this->request->username;
+        $accountUser->birth = $this->request->birth;
+        $accountUser->gender = $this->request->gender;
+        $accountUser->account_idx = $account->idx;
+
+        $accountUser->save();
     }
 
 }

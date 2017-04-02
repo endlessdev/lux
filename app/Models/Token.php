@@ -21,9 +21,13 @@ class Token extends Model
         return $this->belongsTo('App\Models\Account', 'account_idx', 'idx');
     }
 
-    public function isVerifyToken(){
+    public function isExistsToken(){
         return $this->where('token', $this->token)
             ->where('expire_at', '>', date('Y-m-d H:i:s'))->exists();
+    }
+
+    public static function getTokenVerifyTime(){
+        return date('Y-m-d H:i:s', strtotime('+3 days'));
     }
 
 }

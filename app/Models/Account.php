@@ -32,9 +32,9 @@ class Account extends Model
         return $this->hasOne('App\ModelToken', 'account_idx');
     }
 
-    public function getAccountByEmail(string $userEmail)
+    public function getAccountByIdx()
     {
-        return $this->where('email', $userEmail)
+        return $this->where('accounts.idx', $this->idx)
             ->leftJoin('accounts_users', 'accounts.idx', '=', 'accounts_users.account_idx')
             ->leftJoin('tokens', 'accounts.idx', '=', 'tokens.account_idx')
             ->first();

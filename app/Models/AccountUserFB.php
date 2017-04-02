@@ -23,11 +23,11 @@ class AccountUserFB extends Model
         return $this->belongsTo('App\Models\Account', 'account_idx');
     }
 
-    public function findUserByAppId($appId){
-        return $this->where('fb_id', $appId)
-            ->leftJoin('accounts_users', 'account_idx', '=', 'accounts_users.account_idx')
-            ->leftJoin('accounts', 'account_idx', '=', 'accounts.idx')
-            ->leftJoin('tokens', 'account_idx', '=', 'tokens.account_idx')
+    public function findUserByAppId(){
+        return $this->where('accounts_users_fb.fb_id', $this->fb_id)
+            ->leftJoin('accounts_users', 'accounts_users_fb.account_idx', '=', 'accounts_users.account_idx')
+            ->leftJoin('accounts', 'accounts_users_fb.account_idx', '=', 'accounts.idx')
+            ->leftJoin('tokens', 'accounts_users_fb.account_idx', '=', 'tokens.account_idx')
             ->first();
     }
 
