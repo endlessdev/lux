@@ -74,6 +74,19 @@ class CreateAccountsTable extends Migration
                 ->onDelete('cascade');
         });
 
+        Schema::create('accounts_users_kakao', function(Blueprint $table){
+            $table->increments('idx');
+            $table->integer('account_idx')->unsigned();
+
+            $table->string('kakao_id');
+            $table->string('kakao_token');
+
+            $table->foreign('account_idx')
+                ->references('idx')
+                ->on('accounts')
+                ->onDelete('cascade');
+        });
+
     }
 
     /**
