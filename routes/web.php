@@ -34,7 +34,7 @@ $app->group([
         $app->post('/signin/{snsType:[a-z_]+}', 'AuthController@signInWithApp');
         $app->post('/signup/{snsType:[a-z_]+}', 'AuthController@signUpWithApp');
 
-        $app->get('/refresh/{accountIdx?}', 'AuthController@refreshToken');
+        $app->put('/refresh', 'AuthController@refreshToken');
         $app->get('/info/{accountIdx?}', 'AuthController@getAuthInfo');
 
         $app->delete('/{accountIdx?}','AuthController@deleteAccount');

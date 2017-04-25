@@ -17,17 +17,35 @@ class Token extends Model
 
     protected $dates = ['expire_at', 'created_at'];
 
-    public function account(){
+    public function account()
+    {
         return $this->belongsTo('App\Models\Account', 'account_idx', 'idx');
     }
 
-    public function isExistsToken(){
+    public function isExistsToken()
+    {
         return $this->where('token', $this->token)
             ->where('expire_at', '>', date('Y-m-d H:i:s'))->exists();
     }
 
-    public static function getTokenVerifyTime(){
+    public static function getTokenVerifyTime()
+    {
         return date('Y-m-d H:i:s', strtotime('+3 days'));
+    }
+
+    public function findByAccountIdx(int $accountIdx)
+    {
+        return $this->where('account_idx', $accountIdx)->first();
+    }
+
+    public function findByToken(string $token)
+    {
+        return $this->where('token', $token)->first();
+    }
+
+    public function refreshToken()
+    {
+
     }
 
 }

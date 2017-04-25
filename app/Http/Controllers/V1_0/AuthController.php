@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\V1_0;
 
+//use Illuminate\Support\Facades\Validator as Validator;
+use Illuminate\Support\Facades\Validator;
+
 use App\Helpers\Token;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
@@ -9,6 +12,7 @@ use App\Models\AccountUser;
 use App\Models\AccountUserFB;
 use Illuminate\Http\Request;
 use App\Helpers\Response;
+
 
 use App\Models\Token as TokenModel;
 
@@ -36,22 +40,26 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $foundAccount = $this->account->getAccountByIdx();
+        $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
 
         if (!$foundAccount) {
-            return Response::commonResponse("Not exists", [], 404);
+            return Response::commonResponse("not exists", [], 404);
         }
 
         if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
-            return Response::commonResponse("Succeed Sign In", $foundAccount, 200);
+            return Response::commonResponse("succeed sign in", $foundAccount, 200);
         } else {
-            return Response::commonResponse("Incorrect password", [], 401);
+            return Response::commonResponse("incorrect password", [], 401);
         }
     }
 
     public function signUp()
     {
-        $this->validate($this->request, $this->getCommonSignUpValidation());
+
+        $validator = Validator::make($this->request, $this->getCommonSignUpValidation());
+
+        if ($validator->fails())
+            return Response::commonResponse("failed signup", $validator->fails(), 422);
 
         $account = new Account();
         $accountUser = new AccountUser();
@@ -60,7 +68,7 @@ class AuthController extends Controller
 
         $this->generateToken($account->idx);
 
-        return Response::commonResponse("Successful SignUp", $account->getAccountByIdx($account->idx), 201);
+        return Response::commonResponse("successful signUp", $account->getAccountByIdx($account->idx), 201);
     }
 
     public function signInWithApp($snsType)
@@ -121,9 +129,24 @@ class AuthController extends Controller
 
     }
 
-    public function refreshToken(int $accountIdx)
+    public function refreshToken()
     {
+        $userToken = $this->request->header('Authorization');
 
+
+        $tokenModel = new TokenModel();
+        $foundToken = $tokenModel->findByToken($userToken);
+
+        if(!isset($foundToken)){
+            return Response::commonResponse("not valid token", $foundToken, 401);
+        }
+
+        $this->getNewToken($foundToken);
+
+        $foundToken->expire_at = TokenModel::getTokenVerifyTime();
+        $foundToken->save();
+
+        return Response::commonResponse("successful refreshed token", $foundToken, 200);
     }
 
     public function getAuthInfo(int $accountIdx)

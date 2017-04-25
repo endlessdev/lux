@@ -40,4 +40,12 @@ class Account extends Model
             ->first();
     }
 
+    public function getAccountInfoByEmail($userEmail)
+    {
+        return $this->where('accounts.email', $userEmail)
+            ->leftJoin('accounts_users', 'accounts.idx', '=', 'accounts_users.account_idx')
+            ->leftJoin('tokens', 'accounts.idx', '=', 'tokens.account_idx')
+            ->first();
+    }
+
 }
