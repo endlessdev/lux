@@ -56,10 +56,7 @@ class AuthController extends Controller
     public function signUp()
     {
 
-        $validator = Validator::make($this->request, $this->getCommonSignUpValidation());
-
-        if ($validator->fails())
-            return Response::commonResponse("failed signup", $validator->fails(), 422);
+        $this->validate($this->request, $this->getCommonSignUpValidation());
 
         $account = new Account();
         $accountUser = new AccountUser();
