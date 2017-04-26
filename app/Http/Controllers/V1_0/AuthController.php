@@ -149,6 +149,19 @@ class AuthController extends Controller
     public function getAuthInfo(int $accountIdx)
     {
 
+        $userToken = $this->request->header('Authorization');
+
+        $account = new Account();
+        $account->idx = $accountIdx;
+        $foundUserInfo = $account->getAccountByIdx();
+
+        if(!isset($foundUserInfo)){
+            return Response::commonResponse("not exist account", [], 404);
+        } else if ($foundUserInfo->token != $userToken){
+            return Response::commonResponse("is not valid token", [], 401);
+        }
+
+        return Response::commonResponse("succeed get account info", $foundUserInfo, 200);
     }
 
     public function deleteAccount(int $accountIdx)
