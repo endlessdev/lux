@@ -42,6 +42,8 @@ class AuthController extends Controller
 
         $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
 
+        $this->checkDeletedUser($foundAccount->idx);
+
         if (!$foundAccount) {
             return Response::commonResponse("not exists", [], 404);
         }
@@ -82,6 +84,7 @@ class AuthController extends Controller
                 $userFB->fb_id = $this->request->appId;
 
                 $foundUser = $userFB->findUserByAppId();
+                $this->checkDeletedUser($foundUser->account_idx);
 
                 return Response::commonResponse("Success signInWithApp", $foundUser, 200);
                 break;
@@ -134,7 +137,7 @@ class AuthController extends Controller
         $tokenModel = new TokenModel();
         $foundToken = $tokenModel->findByToken($userToken);
 
-        if(!isset($foundToken)){
+        if (!isset($foundToken)) {
             return Response::commonResponse("not valid token", $foundToken, 401);
         }
 
@@ -155,9 +158,11 @@ class AuthController extends Controller
         $account->idx = $accountIdx;
         $foundUserInfo = $account->getAccountByIdx();
 
-        if(!isset($foundUserInfo)){
+        $this->checkDeletedUser($foundUserInfo->idx);
+
+        if (!isset($foundUserInfo)) {
             return Response::commonResponse("not exist account", [], 404);
-        } else if ($foundUserInfo->token != $userToken){
+        } else if ($foundUserInfo->token != $userToken) {
             return Response::commonResponse("is not valid token", [], 401);
         }
 
@@ -169,9 +174,10 @@ class AuthController extends Controller
         $userToken = $this->request->header('Authorization');
         $foundToken = TokenModel::where('account_idx', $accountIdx)->where('token', $userToken);
 
-        $foundAccount = Account::where('account_idx', $accountIdx);
+        $foundAccount = Account::where('idx', $accountIdx);
+        $this->checkDeletedUser($accountIdx);
 
-        if(!isset($foundAccount) || !isset($foundToken)){
+        if (!isset($foundAccount) || !isset($foundToken)) {
             return Response::commonResponse("not found account or token", [], 401);
         }
 
@@ -207,7 +213,6 @@ class AuthController extends Controller
         while ($tokenModel->isExistsToken()) {
             $tokenModel->token = Token::getToken();
         }
-
         return $tokenModel;
     }
 
@@ -225,6 +230,21 @@ class AuthController extends Controller
         $accountUser->account_idx = $account->idx;
 
         $accountUser->save();
+    }
+
+    private function isDeletedUser(int $accountIdx)
+    {
+        $account = Account::where('account_idx', $accountIdx)->first();
+        if (isset($account->deleted_at)) {
+            return true;
+        }
+        return false;
+    }
+
+    private function checkDeletedUser(int $accountIdx){
+        if($this->isDeletedUser($accountIdx)){
+            return Response::commonResponse("this user is deleted", [], 404);
+        }
     }
 
 }
