@@ -19,6 +19,7 @@ class CreateAccountsTable extends Migration
             $table->engine = 'InnoDB';
 
             $table->increments('idx');
+            $table->timestamp('deleted_at');
             $table->enum('type', [
                 'user',
                 'admin',

@@ -151,9 +151,19 @@ class AuthController extends Controller
 
     }
 
-    public function deleteAccount()
+    public function deleteAccount(int $accountIdx)
     {
+        $userToken = $this->request->header('Authorization');
+        $foundToken = TokenModel::where('account_idx', $accountIdx)->where('token', $userToken);
 
+        $foundAccount = Account::where('account_idx', $accountIdx);
+
+        if(!isset($foundAccount) || !isset($foundToken)){
+            return Response::commonResponse("not found account or token", [], 401);
+        }
+
+        $foundAccount->update(['deleted_at' => date('Y-m-d H:i:s')]);
+        return Response::commonResponse("succeed delete account", $foundAccount, 200);
     }
 
     private function getCommonSignUpValidation()
