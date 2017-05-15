@@ -234,7 +234,7 @@ class AuthController extends Controller
 
     private function isDeletedUser(int $accountIdx)
     {
-        $account = Account::where('account_idx', $accountIdx)->first();
+        $account = Account::where('idx', $accountIdx)->first();
         if (isset($account->deleted_at)) {
             return true;
         }
