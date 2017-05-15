@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers\V1_0;
 
-//use Illuminate\Support\Facades\Validator as Validator;
-use Illuminate\Support\Facades\Validator;
-
 use App\Helpers\Token;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AccountUserFB;
+use DateTime;
 use Illuminate\Http\Request;
 use App\Helpers\Response;
 
@@ -49,6 +47,7 @@ class AuthController extends Controller
         }
 
         if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
+            $this->checkVerifyToken($foundAccount->expire_at, $foundAccount->idx);
             return Response::commonResponse("succeed sign in", $foundAccount, 200);
         } else {
             return Response::commonResponse("incorrect password", [], 401);
@@ -194,6 +193,15 @@ class AuthController extends Controller
             'birth' => 'required|date'];
     }
 
+    private function checkVerifyToken(string $expireAt, int $accountIdx)
+    {
+        if (new DateTime($expireAt) < new DateTime()) {
+            $tokenModel = new TokenModel();
+            $foundToken = $tokenModel->findByAccountIdx($accountIdx);
+            $this->getNewToken($foundToken);
+        }
+    }
+
     private function generateToken(int $accountIdx)
     {
         $tokenModel = new TokenModel();
@@ -208,12 +216,13 @@ class AuthController extends Controller
 
     private function getNewToken(TokenModel &$tokenModel)
     {
-        $tokenModel->token = Token::getToken();
-
         while ($tokenModel->isExistsToken()) {
             $tokenModel->token = Token::getToken();
         }
-        return $tokenModel;
+
+        $tokenModel->expire_at = $tokenModel->getTokenVerifyTime();
+
+        return $tokenModel->save();
     }
 
     private function baseSignUp(Account &$account, AccountUser &$accountUser)
@@ -241,8 +250,9 @@ class AuthController extends Controller
         return false;
     }
 
-    private function checkDeletedUser(int $accountIdx){
-        if($this->isDeletedUser($accountIdx)){
+    private function checkDeletedUser(int $accountIdx)
+    {
+        if ($this->isDeletedUser($accountIdx)) {
             return Response::commonResponse("this user is deleted", [], 404);
         }
     }
