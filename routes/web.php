@@ -40,5 +40,11 @@ $app->group([
         $app->delete('/delete/{accountIdx:[0-9]+}', 'AuthController@deleteAccount');
     });
 
+    $app->group([
+        'prefix' => 'users'
+    ], function () use ($app) {
+        $app->get('/', 'UserController@getUsers');
+    });
+
 });
 
