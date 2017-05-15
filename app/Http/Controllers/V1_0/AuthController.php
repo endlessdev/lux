@@ -84,7 +84,7 @@ class AuthController extends Controller
 
                 $foundUser = $userFB->findUserByAppId();
                 $this->checkDeletedUser($foundUser->account_idx);
-
+                $this->checkVerifyToken($foundUser->expire_at, $foundUser->idx);
                 return Response::commonResponse("Success signInWithApp", $foundUser, 200);
                 break;
         }
