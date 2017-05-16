@@ -48,4 +48,9 @@ class Account extends Model
             ->first();
     }
 
+    public function isDeletedUser()
+    {
+        return !empty($this->where('accounts.idx', $this->idx)->first()->deleted_at);
+    }
+
 }
