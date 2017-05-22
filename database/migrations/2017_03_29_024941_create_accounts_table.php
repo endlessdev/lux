@@ -51,7 +51,7 @@ class CreateAccountsTable extends Migration
             $table->enum('join_type', [
                 'general',
                 'facebook',
-//                'kakao',
+                'kakao',
 //                'naver',
                 'twitter'
             ])->default('general');

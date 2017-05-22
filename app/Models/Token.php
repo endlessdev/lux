@@ -38,14 +38,12 @@ class Token extends Model
         return $this->where('account_idx', $accountIdx)->first();
     }
 
-    public function findByToken(string $token)
+    public static function findByToken(string $token)
     {
-        return $this->where('token', $token)->first();
-    }
-
-    public function refreshToken()
-    {
-
+        return Token::where('token', $token)
+            ->leftJoin('accounts', 'tokens.account_idx', '=', 'accounts.idx')
+            ->leftJoin('accounts_users', 'accounts.idx', '=', 'accounts_users.account_idx')
+            ->first();
     }
 
 }

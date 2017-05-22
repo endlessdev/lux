@@ -35,7 +35,9 @@ $app->group([
         $app->post('/signup/{snsType:[a-z_]+}', 'AuthController@signUpWithApp');
 
         $app->put('/refresh', 'AuthController@refreshToken');
-        $app->get('/info/{accountIdx:[0-9]+}', 'AuthController@getAuthInfo');
+        $app->get('/info', 'AuthController@getAuthInfo');
+
+        $app->put('/info', 'AuthController@updateUserInfo');
 
         $app->delete('/delete/{accountIdx:[0-9]+}', 'AuthController@deleteAccount');
     });
@@ -44,6 +46,7 @@ $app->group([
         'prefix' => 'users'
     ], function () use ($app) {
         $app->get('/', 'UserController@getUsers');
+        $app->get('/{userIdx:[0-9]+}', 'UserController@getUser');
     });
 
 });

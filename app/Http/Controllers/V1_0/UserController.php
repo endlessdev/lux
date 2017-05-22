@@ -13,6 +13,7 @@ use App\Helpers\Response;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 
+use function FastRoute\TestFixtures\empty_options_cached;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -34,10 +35,26 @@ class UserController extends Controller
             ->paginate();
 
         if (!empty($users)) {
-            return Response::commonResponse("Success", $users, 200);
+            return Response::common(200, $users);
         } else {
-            return Response::commonResponse("Not found", [], 404);
+            return Response::common(404);
         }
+    }
+
+    public function getUser(int $userIdx)
+    {
+        $foundUser = Account::where('accounts.idx', $userIdx)
+            ->leftJoin('accounts_users', 'accounts.idx', '=', 'accounts_users.account_idx')
+            ->first();
+
+
+        if (empty($foundUser)) {
+            return Response::common(404);
+        }
+
+        unset($foundUser['password']);
+
+        return Response::common(200, $foundUser);
     }
 
 }

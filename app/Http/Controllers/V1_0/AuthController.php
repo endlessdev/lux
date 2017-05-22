@@ -15,7 +15,6 @@ use App\Helpers\Response;
 
 use App\Models\Token as TokenModel;
 
-
 /**
  * @class AuthController
  * @package App\Http\Controllers\V1_0
@@ -42,18 +41,18 @@ class AuthController extends Controller
         $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
 
         if ($foundAccount->isDeletedUser()) {
-            return Response::commonResponse("this user is deleted", [], 404);
+            return Response::common(410);
         }
 
         if (!$foundAccount) {
-            return Response::commonResponse("not exists", [], 404);
+            return Response::common(404);
         }
 
         if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
             $this->checkVerifyToken($foundAccount->expire_at, $foundAccount->idx);
-            return Response::commonResponse("succeed sign in", $foundAccount, 200);
+            return Response::common(200, $foundAccount);
         } else {
-            return Response::commonResponse("incorrect password", [], 401);
+            return Response::common(404);
         }
     }
 
@@ -66,10 +65,9 @@ class AuthController extends Controller
         $accountUser = new AccountUser();
 
         $this->baseSignUp($account, $accountUser, "general");
-
         $this->generateToken($account->idx);
 
-        return Response::commonResponse("successful signUp", $account->getAccountByIdx($account->idx), 201);
+        return Response::common(201, $account->getAccountByIdx($account->idx));
     }
 
     public function signInWithApp($snsType)
@@ -89,7 +87,7 @@ class AuthController extends Controller
                 $foundUser = $userFB->findUserByAppId();
                 $this->checkDeletedUser($foundUser->account_idx);
                 $this->checkVerifyToken($foundUser->expire_at, $foundUser->idx);
-                return Response::commonResponse("Success signInWithApp", $foundUser, 200);
+                return Response::common(200, $foundUser);
             case "kakao":
 
                 $this->validate($this->request, [
@@ -103,9 +101,9 @@ class AuthController extends Controller
                 $foundUser = $userKakao->findUserByAppId();
                 $this->checkDeletedUser($foundUser->account_idx);
                 $this->checkVerifyToken($foundUser->expire_at, $foundUser->idx);
-                return Response::commonResponse("Success signInWithApp", $foundUser, 200);
+                return Response::common(200, $foundUser);
         }
-        return Response::commonResponse("Failed signInWithApp", [], 400);
+        return Response::common(401);
     }
 
     public function signUpWithApp($snsType)
@@ -138,7 +136,34 @@ class AuthController extends Controller
                 $accountUserFB->save();
 
 
-                return Response::commonResponse("Successful SignUp", $account->getAccountByIdx(), 201);
+                return Response::common(201, $account->getAccountByIdx());
+                break;
+            case 'kakao':
+                $fbValidationCollection = collect([
+                    'appId' => 'required|unique:accounts_users_kakao,kakao_id',
+                    'appToken' => 'required|unique:accounts_users_kakao,kakao_token'
+                ]);
+
+                $this->validate($this->request, $fbValidationCollection
+                    ->merge($this->getCommonSignUpValidation())->toArray());
+
+                $account = new Account();
+                $accountUser = new AccountUser();
+
+                $this->baseSignUp($account, $accountUser, "kakao");
+
+                $accountUserKakao = new AccountUserKakao();
+
+                $this->generateToken($account->idx);
+
+                $accountUserKakao->kakao_id = $this->request->appId;
+                $accountUserKakao->kakao_token = $this->request->appToken;
+                $accountUserKakao->account_idx = $account->idx;
+
+                $accountUserKakao->save();
+
+
+                return Response::common(201, $account->getAccountByIdx());
                 break;
         }
 
@@ -153,7 +178,7 @@ class AuthController extends Controller
         $foundToken = $tokenModel->findByToken($userToken);
 
         if (!isset($foundToken)) {
-            return Response::commonResponse("not valid token", $foundToken, 401);
+            return Response::common(401, $foundToken);
         }
 
         $this->getNewToken($foundToken);
@@ -161,27 +186,21 @@ class AuthController extends Controller
         $foundToken->expire_at = TokenModel::getTokenVerifyTime();
         $foundToken->save();
 
-        return Response::commonResponse("successful refreshed token", $foundToken, 200);
+        return Response::common(200, $foundToken);
     }
 
-    public function getAuthInfo(int $accountIdx)
+    public function getAuthInfo()
     {
-
         $userToken = $this->request->header('Authorization');
 
-        $account = new Account();
-        $account->idx = $accountIdx;
-        $foundUserInfo = $account->getAccountByIdx();
-
-        $this->checkDeletedUser($foundUserInfo->idx);
+        $foundUserInfo = TokenModel::findByToken($userToken);
 
         if (!isset($foundUserInfo)) {
-            return Response::commonResponse("not exist account", [], 404);
-        } else if ($foundUserInfo->token != $userToken) {
-            return Response::commonResponse("is not valid token", [], 401);
+            return Response::common(401);
         }
 
-        return Response::commonResponse("succeed get account info", $foundUserInfo, 200);
+        $this->checkDeletedUser($foundUserInfo->account_idx);
+        return Response::common(200, $foundUserInfo);
     }
 
     public function deleteAccount(int $accountIdx)
@@ -193,11 +212,45 @@ class AuthController extends Controller
         $this->checkDeletedUser($accountIdx);
 
         if (!isset($foundAccount) || !isset($foundToken)) {
-            return Response::commonResponse("not found account or token", [], 401);
+            return Response::common(401);
         }
 
         $foundAccount->update(['deleted_at' => date('Y-m-d H:i:s')]);
-        return Response::commonResponse("succeed delete account", $foundAccount, 200);
+        return Response::common(200, $foundAccount);
+    }
+
+    public function updateUserInfo()
+    {
+        $userToken = $this->request->header('Authorization');
+        $foundToken = TokenModel::findByToken($userToken);
+
+        if (!empty($foundToken)) {
+
+            $this->validate($this->request, [
+                'birth' => 'date',
+                'gender' => 'in:male,female,androgyne,trigender,agender,genderfluid',
+                'username' => 'unique:accounts_users,username'
+            ]);
+
+            $accountUser = AccountUser::where('account_idx', $foundToken->idx)->first();
+
+
+            if ($this->request->input('birth')) {
+                $accountUser->birth = $this->request->input('birth');
+
+            } else if ($this->request->input('gender')) {
+                $accountUser->gender = $this->request->input('gender');
+
+            } else if ($this->request->username) {
+                $accountUser->username = $this->request->input('username');
+            }
+
+            $accountUser->save();
+            return Response::common(200, TokenModel::findByToken($userToken));
+        } else {
+            return Response::common(401);
+        }
+
     }
 
     private function getCommonSignUpValidation()
@@ -240,7 +293,7 @@ class AuthController extends Controller
 
         $tokenModel->expire_at = $tokenModel->getTokenVerifyTime();
 
-        return $tokenModel->save();
+        return $tokenModel;
     }
 
     private function baseSignUp(Account &$account, AccountUser &$accountUser, string $joinType)
@@ -272,7 +325,7 @@ class AuthController extends Controller
     private function checkDeletedUser(int $accountIdx)
     {
         if ($this->isDeletedUser($accountIdx)) {
-            return Response::commonResponse("this user is deleted", [], 404);
+            return Response::common(404);
         }
         return false;
     }
