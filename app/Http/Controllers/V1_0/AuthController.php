@@ -232,21 +232,22 @@ class AuthController extends Controller
                 'username' => 'unique:accounts_users,username'
             ]);
 
-            $accountUser = AccountUser::where('account_idx', $foundToken->idx)->first();
-
+            $accountUser = AccountUser::where('account_idx', $foundToken->account_idx)->first();
 
             if ($this->request->input('birth')) {
                 $accountUser->birth = $this->request->input('birth');
 
-            } else if ($this->request->input('gender')) {
+            }
+            if ($this->request->input('gender')) {
                 $accountUser->gender = $this->request->input('gender');
 
-            } else if ($this->request->username) {
+            }
+            if ($this->request->input('username')) {
                 $accountUser->username = $this->request->input('username');
             }
 
             $accountUser->save();
-            return Response::common(200, TokenModel::findByToken($userToken));
+            return Response::common(200, $accountUser);
         } else {
             return Response::common(401);
         }
