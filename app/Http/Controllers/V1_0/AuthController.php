@@ -38,15 +38,16 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
+//        var_dump($this->request->email);
 
-        if ($foundAccount->isDeletedUser()) {
-            return Response::common(410);
-        }
+        $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
+//        var_dump($foundAccount);
 
         if (!$foundAccount) {
             return Response::common(404);
         }
+
+        $this->checkDeletedUser($foundAccount->idx);
 
         if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
             $this->checkVerifyToken($foundAccount->expire_at, $foundAccount->idx);
@@ -54,6 +55,37 @@ class AuthController extends Controller
         } else {
             return Response::common(404);
         }
+    }
+
+    public function cancelDeletedAccount()
+    {
+
+        $this->validate($this->request, [
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        $foundAccount = $this->account->getAccountInfoByEmail($this->request->email);
+
+        if (!$foundAccount) {
+            return Response::common(404);
+        }
+
+        $this->checkDeletedUser($foundAccount->idx);
+
+        if (app('hash')->check($this->request->input('password'), $foundAccount->password)) {
+            $this->checkVerifyToken($foundAccount->expire_at, $foundAccount->idx);
+
+            $account = Account::where('idx', $foundAccount->idx);
+            $account->update(['deleted_at' => '']);
+            $account->restore();
+
+            return Response::common(201, $foundAccount);
+        } else {
+            var_dump($foundAccount);
+            return Response::common(404);
+        }
+
     }
 
     public function signUp()
@@ -69,6 +101,7 @@ class AuthController extends Controller
 
         return Response::common(201, $account->getAccountByIdx($account->idx));
     }
+
 
     public function signInWithApp($snsType)
     {
@@ -215,7 +248,7 @@ class AuthController extends Controller
             return Response::common(401);
         }
 
-        $foundAccount->update(['deleted_at' => date('Y-m-d H:i:s')]);
+        $foundAccount->delete();
         return Response::common(200, $foundAccount);
     }
 
@@ -316,11 +349,7 @@ class AuthController extends Controller
 
     private function isDeletedUser(int $accountIdx)
     {
-        $account = Account::where('idx', $accountIdx)->first();
-        if (!empty($account->deleted_at)) {
-            return true;
-        }
-        return false;
+        return !empty(Account::where('idx', $accountIdx)->first()->deleted_at);
     }
 
     private function checkDeletedUser(int $accountIdx)
@@ -328,7 +357,6 @@ class AuthController extends Controller
         if ($this->isDeletedUser($accountIdx)) {
             return Response::common(404);
         }
-        return false;
     }
 
 }

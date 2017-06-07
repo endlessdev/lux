@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Created by PhpStorm.
@@ -16,6 +17,8 @@ class Account extends Model
     protected $primaryKey = 'idx';
     protected $dates = ['created_at', 'deleted_at'];
     protected $guarded = ['idx', 'type', 'created_at'];
+
+    use SoftDeletes;
 
     public function detail()
     {
@@ -40,17 +43,17 @@ class Account extends Model
             ->first();
     }
 
-    public function getAccountInfoByEmail($userEmail)
+    public function getAccountInfoByEmail(string $userEmail)
     {
-        return $this->where('accounts.email', $userEmail)
+
+        return $this->withTrashed()->where('accounts.email', $userEmail)
             ->leftJoin('accounts_users', 'accounts.idx', '=', 'accounts_users.account_idx')
-            ->leftJoin('tokens', 'accounts.idx', '=', 'tokens.account_idx')
-            ->first();
+            ->leftJoin('tokens', 'accounts.idx', '=', 'tokens.account_idx')->first();
     }
 
     public function isDeletedUser()
     {
-        return !empty($this->where('accounts.idx', $this->idx)->first()->deleted_at);
+        return $this->where('idx', $this->idx)->trashed();
     }
 
 }

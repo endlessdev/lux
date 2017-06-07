@@ -19,7 +19,6 @@ class CreateAccountsTable extends Migration
             $table->engine = 'InnoDB';
 
             $table->increments('idx');
-            $table->timestamp('deleted_at');
             $table->enum('type', [
                 'user',
                 'admin',
@@ -27,6 +26,7 @@ class CreateAccountsTable extends Migration
             $table->string('email', 100)->unique()->nullable();
             $table->string('password', 100)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('accounts_users', function (Blueprint $table) {

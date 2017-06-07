@@ -40,6 +40,7 @@ $app->group([
         $app->put('/info', 'AuthController@updateUserInfo');
 
         $app->delete('/delete/{accountIdx:[0-9]+}', 'AuthController@deleteAccount');
+        $app->put('/delete/cancel', 'AuthController@cancelDeletedAccount');
     });
 
     $app->group([
